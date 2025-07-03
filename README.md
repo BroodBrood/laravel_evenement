@@ -116,16 +116,54 @@ Route::get('/evenementen/{evenement}', [EvenementController::class, 'show'])->na
 
 ## 🚀 Deployment
 
-Zie [DEPLOYMENT.md](DEPLOYMENT.md) voor gedetailleerde deployment instructies.
+### FileZilla Server Deployment
 
-### Snelle deployment stappen:
-1. Upload bestanden naar hosting (exclusief `vendor/`, `node_modules/`, `.env`)
-2. Run `composer install --optimize-autoloader --no-dev`
-3. Configureer `.env` bestand
-4. Run `php artisan key:generate`
-5. Run `php artisan migrate`
-6. Set permissions: `chmod -R 775 storage/ bootstrap/cache/`
-7. Run cache optimalisatie: `php artisan config:cache`
+1. **Voorbereiding:**
+   ```bash
+   # Run het deployment script
+   deploy_to_server.bat
+   ```
+
+2. **Upload naar server:**
+   - Verbind met je FileZilla server
+   - Upload alle bestanden naar `public_html/`
+   - Zorg ervoor dat `.env` ook wordt geüpload
+
+3. **Server configuratie:**
+   ```bash
+   # Op de server uitvoeren:
+   php artisan key:generate
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   php artisan migrate --force
+   php artisan storage:link
+   ```
+
+4. **Permissies instellen:**
+   ```bash
+   chmod -R 755 storage/
+   chmod -R 755 bootstrap/cache/
+   chmod -R 755 public/storage/
+   ```
+
+### GitHub Repository
+
+1. **Repository initialiseren:**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit: Laravel Evenement project"
+   git remote add origin https://github.com/BroodBrood/laravel_evenement.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+2. **Automatische deployment:**
+   - Configureer GitHub Secrets (FTP_SERVER, FTP_USERNAME, FTP_PASSWORD)
+   - Bij elke push naar `main` wordt automatisch gedeployed
+
+Zie [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) voor uitgebreide instructies.
 
 ## 🤝 Bijdragen
 

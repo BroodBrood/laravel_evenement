@@ -1,0 +1,79 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo, session, simplexml, tokenizer, xml, xmlreader, xmlwriter, zip
+        tools: composer:v2
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader
+      
+    - name: Install NPM dependencies
+      run: npm ci
+      
+    - name: Build assets
+      run: npm run build
+      
+    - name: Create deployment package
+      run: |
+        # Exclude development files
+        rm -rf node_modules
+        rm -rf .git
+        rm -rf .github
+        rm -rf tests
+        rm -rf .editorconfig
+        rm -rf .styleci.yml
+        rm -rf phpunit.xml
+        rm -rf CHANGELOG.md
+        rm -rf DEPLOYMENT_GUIDE.md
+        rm -rf deploy_to_server.bat
+        
+        # Create zip file
+        zip -r deployment.zip . -x "*.git*" "node_modules/*" ".github/*" "tests/*"
+        
+    - name: Upload deployment package
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-package
+        path: deployment.zip
+        
+    - name: Deploy to server via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: ./public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/.github/**
+          **/tests/**
+          **/.editorconfig
+          **/.styleci.yml
+          **/phpunit.xml
+          **/CHANGELOG.md
+          **/DEPLOYMENT_GUIDE.md
+          **/deploy_to_server.bat 
